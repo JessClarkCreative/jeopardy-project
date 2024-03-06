@@ -3,14 +3,34 @@ let categories = [];
 const NUM_CATEGORIES = 6;
 const NUM_QUESTIONS_PER_CAT = 5;
 
-async function getCategoryIds() {
+function getCategoryIds() {
   try {
-    const response = await axios.get(`https://rithm-jeopardy.herokuapp.com/api/categories?count=${NUM_CATEGORIES}`);
-    return response.data.map(category => category.id);
+    const allCategoryIds = [
+      2, 3, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18
+    ];
+
+    if (allCategoryIds.length < NUM_CATEGORIES) {
+      console.error("Not enough categories available.");
+      return [];
+    }
+
+    const shuffledCategoryIds = shuffleArray(allCategoryIds);
+
+    return shuffledCategoryIds.slice(0, NUM_CATEGORIES);
   } catch (error) {
     console.error("Error getting category ids:", error);
+    return [];
   }
 }
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
 
 async function getCategory(catId) {
   try {
@@ -38,10 +58,10 @@ async function fillTable() {
       const tbody = document.createElement("tbody");
   
       const categoryIds = await getCategoryIds();
+      categories = await Promise.all(categoryIds.map(catId => getCategory(catId)));
   
       const trHead = document.createElement("tr");
-      for (const catId of categoryIds) {
-        const category = await getCategory(catId);
+      for (const category of categories) {
         const th = document.createElement("th");
         th.textContent = category.title;
         trHead.appendChild(th);
@@ -50,10 +70,11 @@ async function fillTable() {
   
       for (let i = 0; i < NUM_QUESTIONS_PER_CAT; i++) {
         const tr = document.createElement("tr");
-        for (const catId of categoryIds) {
+        for (const category of categories) {
           const td = document.createElement("td");
+          const clue = category.clues[i];
           td.textContent = "?";
-          td.addEventListener("click", handleClick);
+          td.addEventListener("click", (evt) => handleClick(evt, clue));
           tr.appendChild(td);
         }
         tbody.appendChild(tr);
@@ -65,29 +86,25 @@ async function fillTable() {
     } catch (error) {
       console.error("Error filling table:", error);
     }
-  }  
-  
-function handleClick(evt) {
-    const td = evt.target;
-    const row = td.parentElement.rowIndex - 1;
-    const col = td.cellIndex;
-  
-    const category = categories[col];
-    const clue = category.clues[row];
-  
-    if (!clue.hasOwnProperty('clickCounter')) {
-      clue.clickCounter = 0;
-    }
-  
-    if (clue.clickCounter === 0) {
-      td.textContent = clue.question;
-    } else if (clue.clickCounter === 1) {
-      td.textContent = clue.answer;
-      td.removeEventListener("click", handleClick);
-    }
-
-    clue.clickCounter += 1;
 }
+
+function handleClick(evt, clue) {
+  const td = evt.target;
+  
+  if (!clue.hasOwnProperty('clickCounter')) {
+    clue.clickCounter = 0;
+  }
+
+  if (clue.clickCounter === 0) {
+    td.textContent = clue.question;
+  } else if (clue.clickCounter === 1) {
+    td.textContent = clue.answer;
+    td.removeEventListener("click", (evt) => handleClick(evt, clue));
+  }
+
+  clue.clickCounter += 1;
+}
+
   
 
 function showLoadingView() {
