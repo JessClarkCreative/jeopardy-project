@@ -1,7 +1,48 @@
-/* some colors you may find useful:
-  #115ff4
-  #060ce9
-  #28a200
-  #8d2ab5
-  #74119c
-*/
+body {
+  font-family: 'Copse', sans-serif;
+  background-color: #7095db;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+#jeopardy {
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+
+#jeopardy th,
+#jeopardy td {
+  width: 150px; /* Adjust the width as needed */
+  height: 100px; /* Adjust the height as needed */
+  text-align: center;
+  vertical-align: middle;
+  background-color: #454af6;
+  cursor: pointer;
+}
+
+#jeopardy th.header-cell {
+ height: 50px;
+}
+
+#jeopardy td.clicked {
+  background-color: #28a200;
+}
+
+#restart-button {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #8d2ab5;
+  color: white;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+}
+
+#restart-button:hover {
+  background-color: #74119c;
+}

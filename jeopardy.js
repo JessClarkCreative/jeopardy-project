@@ -31,25 +31,39 @@ function shuffleArray(array) {
   return array;
 }
 
-
-async function getCategory(catId) {
-  try {
-    const response = await axios.get(`https://rithm-jeopardy.herokuapp.com/api/category?id=${catId}`);
-
-    console.log("Full API Response:", response); 
-
-    if (!response.data || !response.data.id || !response.data.title || !response.data.clues || !Array.isArray(response.data.clues)) {
-      throw new Error("Invalid data structure in the API response");
-    }
-
-    const categoryTitle = response.data.title;
-    const clues = response.data.clues.map(qa => ({ question: qa.question, answer: qa.answer, showing: null }));
-
-    return { title: categoryTitle, clues };
-  } catch (error) {
-    console.error("Error getting category data:", error);
+function stripHtmlTags(inputString) {
+    const tempElement = document.createElement('div');
+    tempElement.innerHTML = inputString;
+    return tempElement.innerText;
   }
-}
+  
+
+  async function getCategory(catId) {
+    try {
+      const response = await axios.get(`https://rithm-jeopardy.herokuapp.com/api/category?id=${catId}`);
+  
+      console.log("Full API Response:", response);
+  
+      if (!response.data || !response.data.id || !response.data.title || !response.data.clues || !Array.isArray(response.data.clues)) {
+        throw new Error("Invalid data structure in the API response");
+      }
+  
+      const categoryTitle = response.data.title;
+      const clues = response.data.clues.map(qa => ({
+        question: qa.question,
+        answer: stripHtmlTags(qa.answer), // Use the stripHtmlTags function here
+        showing: null
+      }));
+  
+      return {
+        title: categoryTitle,
+        clues
+      };
+    } catch (error) {
+      console.error("Error getting category data:", error);
+    }
+  }
+  
 
 async function fillTable() {
     try {
@@ -64,6 +78,7 @@ async function fillTable() {
       for (const category of categories) {
         const th = document.createElement("th");
         th.textContent = category.title;
+        th.classList.add("header-cell");
         trHead.appendChild(th);
       }
       thead.appendChild(trHead);
@@ -89,21 +104,23 @@ async function fillTable() {
 }
 
 function handleClick(evt, clue) {
-  const td = evt.target;
+    const td = evt.target;
   
-  if (!clue.hasOwnProperty('clickCounter')) {
-    clue.clickCounter = 0;
+    if (!clue.hasOwnProperty('clickCounter')) {
+      clue.clickCounter = 0;
+    }
+  
+    if (clue.clickCounter === 0) {
+      td.textContent = clue.question;
+    } else if (clue.clickCounter === 1) {
+      td.textContent = clue.answer;
+      td.removeEventListener("click", (evt) => handleClick(evt, clue));
+      td.classList.add("clicked"); // Add the clicked class here
+    }
+  
+    clue.clickCounter += 1;
   }
-
-  if (clue.clickCounter === 0) {
-    td.textContent = clue.question;
-  } else if (clue.clickCounter === 1) {
-    td.textContent = clue.answer;
-    td.removeEventListener("click", (evt) => handleClick(evt, clue));
-  }
-
-  clue.clickCounter += 1;
-}
+  
 
   
 
